@@ -1,0 +1,41 @@
+import { test } from "node:test";
+import assert from "node:assert/strict";
+import { decode } from "../src/codec.js";
+
+// Header: {"alg":"HS256","typ":"JWT"}
+// Payload: {"sub":"1234567890","name":"John Doe","iat":1516239022}
+const FIXTURE =
+  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9." +
+  "eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ." +
+  "SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c";
+
+test("decode returns header, payload, signature for a valid token", () => {
+  const r = decode(FIXTURE);
+  assert.equal(r.error, undefined);
+  assert.deepEqual(r.header, { alg: "HS256", typ: "JWT" });
+  assert.equal(r.payload.sub, "1234567890");
+  assert.equal(r.payload.name, "John Doe");
+  assert.equal(r.payload.iat, 1516239022);
+  assert.equal(r.signature, "SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c");
+  assert.equal(r.raw.length, 3);
+});
+
+test("decode returns error for non-string input", () => {
+  assert.match(decode(null).error, /three dot-separated segments/);
+  assert.match(decode(42).error, /three dot-separated segments/);
+});
+
+test("decode returns error for tokens without three segments", () => {
+  assert.match(decode("a.b").error, /three dot-separated segments/);
+  assert.match(decode("a.b.c.d").error, /three dot-separated segments/);
+});
+
+test("decode returns error for non-base64 segments", () => {
+  assert.match(decode("!!!.!!!.!!!").error, /Failed to decode/);
+});
+
+test("decode returns error when header/payload are not JSON", () => {
+  // base64url("not json").base64url("not json").sig
+  const t = "bm90IGpzb24.bm90IGpzb24.sig";
+  assert.match(decode(t).error, /Failed to decode/);
+});
