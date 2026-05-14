@@ -1,4 +1,4 @@
-import { base64url, jwtVerify } from "jose";
+import { base64url, jwtVerify, SignJWT } from "jose";
 
 const dec = new TextDecoder();
 
@@ -38,5 +38,21 @@ export async function verify(token, key, opts = {}) {
     return { ok: true, alg: protectedHeader.alg, payload };
   } catch (e) {
     return { ok: false, error: e.message };
+  }
+}
+
+/**
+ * Sign a JWT. The header object is used verbatim as the protected header
+ * (caller controls alg, typ, kid, etc.). Payload used as-is.
+ *
+ * @param {{header: object, payload: object, key: any}} args
+ * @returns {Promise<{token:string} | {error:string}>}
+ */
+export async function sign({ header, payload, key }) {
+  try {
+    const token = await new SignJWT(payload).setProtectedHeader(header).sign(key);
+    return { token };
+  } catch (e) {
+    return { error: e.message };
   }
 }

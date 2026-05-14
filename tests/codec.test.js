@@ -68,3 +68,31 @@ test("verify reports unsigned tokens (alg=none) as not ok", async () => {
   const r = await verify(t, null);
   assert.equal(r.ok, false);
 });
+
+import { sign } from "../src/codec.js";
+
+for (const alg of [...HMAC_ALGS, ...ASYM_ALGS]) {
+  test(`sign + decode round-trips for ${alg}`, async () => {
+    const { signKey, verifyKey } = await fixture(alg);
+    const r = await sign({
+      header: { alg, typ: "JWT" },
+      payload: { sub: "round-trip", iat: 1700000000 },
+      key: signKey,
+    });
+    assert.equal(r.error, undefined);
+    assert.ok(r.token);
+    const v = await verify(r.token, verifyKey);
+    assert.equal(v.ok, true);
+    assert.equal(v.payload.sub, "round-trip");
+  });
+}
+
+test("sign returns error when key does not match alg", async () => {
+  const { signKey } = await fixture("HS256");
+  const r = await sign({
+    header: { alg: "RS256", typ: "JWT" },
+    payload: { sub: "x" },
+    key: signKey,
+  });
+  assert.ok(r.error);
+});
