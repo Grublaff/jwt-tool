@@ -1,0 +1,18 @@
+name: Deploy
+on:
+  push:
+    branches: [main]
+  workflow_dispatch: {}
+
+jobs:
+  deploy:
+    permissions:
+      contents: read
+      packages: write   # required for GHCR push
+    uses: Grublaff/deploy-workflows/.github/workflows/deploy-site.yml@v1.2
+    with:
+      image-name: jwt-tool
+      site-type: static
+      build-command: npm run build
+      build-output: dist
+    secrets: inherit
