@@ -1,0 +1,26 @@
+{
+  "name": "jwt-tool",
+  "version": "1.0.0",
+  "main": "index.js",
+  "scripts": {
+    "test": "node --test tests/",
+    "dev": "vite",
+    "build": "node --test tests/ && vite build",
+    "preview": "vite preview"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "description": "",
+  "type": "module",
+  "engines": {
+    "node": ">=20"
+  },
+  "private": true,
+  "devDependencies": {
+    "vite": "^5.4.21"
+  },
+  "dependencies": {
+    "jose": "^5.10.0"
+  }
+}
