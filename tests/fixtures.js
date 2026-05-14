@@ -20,5 +20,5 @@ export async function fixture(alg) {
   return { token, signKey, verifyKey };
 }
 
-export const ASYM_ALGS = ["RS256", "RS384", "RS512", "PS256", "ES256", "ES512", "Ed25519"];
+export const ASYM_ALGS = ["RS256", "RS384", "RS512", "PS256", "PS384", "PS512", "ES256", "ES384", "ES512", "Ed25519"];
 export const HMAC_ALGS = ["HS256", "HS384", "HS512"];

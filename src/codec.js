@@ -30,7 +30,7 @@ export function decode(token) {
  * @param {string} token
  * @param {CryptoKey|Uint8Array|object} key  CryptoKey, raw HMAC bytes, or a JWK
  * @param {{algorithms?: string[]}} [opts]
- * @returns {Promise<{ok:true, alg:string, payload:object} | {ok:false, alg?:string, error:string}>}
+ * @returns {Promise<{ok:true, alg:string, payload:object} | {ok:false, error:string}>}
  */
 export async function verify(token, key, opts = {}) {
   try {

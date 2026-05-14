@@ -54,7 +54,7 @@ for (const alg of [...HMAC_ALGS, ...ASYM_ALGS]) {
   test(`verify rejects a tampered ${alg} token`, async () => {
     const { token, verifyKey } = await fixture(alg);
     const parts = token.split(".");
-    // Flip one bit in the payload by re-encoding a different object
+    // Replace the payload with a different one; keep the original signature
     const bad = parts[0] + "." + Buffer.from(JSON.stringify({ sub: "evil" })).toString("base64url") + "." + parts[2];
     const r = await verify(bad, verifyKey);
     assert.equal(r.ok, false);
