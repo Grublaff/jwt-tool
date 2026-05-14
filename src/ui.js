@@ -21,6 +21,8 @@ const state = {
   base64Secret: false,
 };
 
+let decoderRunId = 0;
+
 const left = () => document.getElementById("left");
 const right = () => document.getElementById("right");
 
@@ -50,7 +52,7 @@ function renderDecoderViewSkeleton() {
     <h2>Decoded</h2>
     <pre id="decoded-header">{}</pre>
     <pre id="decoded-payload">{}</pre>
-    <div class="chips" id="status-chips"></div>
+    <div class="chips" id="status-chips" aria-live="polite" aria-atomic="true"></div>
     <div class="controls">
       <label>Algorithm
         <select id="alg-select"></select>
@@ -95,6 +97,7 @@ function renderDecoderViewSkeleton() {
 }
 
 async function rerunDecoder() {
+  const myRun = ++decoderRunId;
   if (!state.token) {
     setText("decoded-header", "{}");
     setText("decoded-payload", "{}");
@@ -103,9 +106,9 @@ async function rerunDecoder() {
   }
   const d = decode(state.token);
   if (d.error) {
-    setText("decoded-header", d.error);
-    setText("decoded-payload", "");
-    setChips([{ kind: "bad", label: "Malformed" }]);
+    setText("decoded-header", "{}");
+    setText("decoded-payload", "{}");
+    setChips([{ kind: "bad", label: "Malformed: " + d.error }]);
     return;
   }
   setText("decoded-header", JSON.stringify(d.header, null, 2));
@@ -125,14 +128,18 @@ async function rerunDecoder() {
   if (state.keyText && d.header.alg !== "none") {
     try {
       const key = await parseKey(state.keyText, state.alg, { base64: state.base64Secret });
+      if (myRun !== decoderRunId) return;            // stale: newer run in flight
       const v = await verify(state.token, key);
+      if (myRun !== decoderRunId) return;            // stale
       chips.unshift(v.ok ? { kind: "ok", label: "Signature ✓" } : { kind: "bad", label: "Signature ✗" });
     } catch (e) {
+      if (myRun !== decoderRunId) return;
       chips.unshift({ kind: "bad", label: "Bad key: " + e.message });
     }
   } else if (d.header.alg !== "none") {
     chips.unshift({ kind: "warn", label: "No key supplied" });
   }
+  if (myRun !== decoderRunId) return;
   setChips(chips);
 }
 
