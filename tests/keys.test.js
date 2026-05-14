@@ -47,3 +47,19 @@ test("parseKey: empty input rejects", async () => {
 test("parseKey: malformed PEM rejects", async () => {
   await assert.rejects(() => parseKey("not a real key", "RS256"));
 });
+
+test("parseKey: HMAC base64 input with embedded newlines + missing padding", async () => {
+  const raw = Buffer.from("hello world this is a secret!!").toString("base64");
+  // Mangle the base64: insert newlines, strip padding
+  const mangled = raw.replace(/(.{8})/g, "$1\n").replace(/=+$/, "");
+  const k = await parseKey(mangled, "HS256", { base64: true });
+  const r = await sign({ alg: "HS256" }, { x: 1 }, k);
+  assert.equal(r.error, undefined);
+});
+
+test("parseKey: unsupported PEM type rejects with clear message", async () => {
+  await assert.rejects(
+    () => parseKey("-----BEGIN CERTIFICATE-----\nfoo\n-----END CERTIFICATE-----", "RS256"),
+    /Unsupported PEM type/,
+  );
+});

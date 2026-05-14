@@ -22,17 +22,22 @@ export async function parseKey(text, alg, opts = {}) {
   }
   if (alg.startsWith("HS")) {
     if (opts.base64) {
-      const normalized = text.trim().replace(/-/g, "+").replace(/_/g, "/");
-      return Uint8Array.from(atob(normalized), (c) => c.charCodeAt(0));
+      const stripped = text.replace(/\s+/g, "").replace(/-/g, "+").replace(/_/g, "/");
+      const padded = stripped + "=".repeat((4 - (stripped.length % 4)) % 4);
+      return Uint8Array.from(atob(padded), (c) => c.charCodeAt(0));
     }
     return enc.encode(text);
   }
   const trimmed = text.trim();
-  if (trimmed.includes("BEGIN PUBLIC KEY") || trimmed.includes("BEGIN CERTIFICATE")) {
+  if (trimmed.startsWith("-----BEGIN PUBLIC KEY-----")) {
     return importSPKI(trimmed, alg);
   }
-  if (trimmed.includes("BEGIN PRIVATE KEY") || trimmed.includes("BEGIN RSA PRIVATE KEY")) {
+  if (trimmed.startsWith("-----BEGIN PRIVATE KEY-----")) {
     return importPKCS8(trimmed, alg);
+  }
+  if (trimmed.startsWith("-----BEGIN ")) {
+    // Some other PEM type (X.509 certificate, PKCS#1, EC PRIVATE KEY, ENCRYPTED, …)
+    throw new Error("Unsupported PEM type — use SPKI public key or PKCS8 private key");
   }
   let jwk;
   try {
