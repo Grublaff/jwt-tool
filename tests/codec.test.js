@@ -74,11 +74,7 @@ import { sign } from "../src/codec.js";
 for (const alg of [...HMAC_ALGS, ...ASYM_ALGS]) {
   test(`sign + decode round-trips for ${alg}`, async () => {
     const { signKey, verifyKey } = await fixture(alg);
-    const r = await sign({
-      header: { alg, typ: "JWT" },
-      payload: { sub: "round-trip", iat: 1700000000 },
-      key: signKey,
-    });
+    const r = await sign({ alg, typ: "JWT" }, { sub: "round-trip", iat: 1700000000 }, signKey);
     assert.equal(r.error, undefined);
     assert.ok(r.token);
     const v = await verify(r.token, verifyKey);
@@ -89,10 +85,17 @@ for (const alg of [...HMAC_ALGS, ...ASYM_ALGS]) {
 
 test("sign returns error when key does not match alg", async () => {
   const { signKey } = await fixture("HS256");
-  const r = await sign({
-    header: { alg: "RS256", typ: "JWT" },
-    payload: { sub: "x" },
-    key: signKey,
-  });
+  const r = await sign({ alg: "RS256", typ: "JWT" }, { sub: "x" }, signKey);
   assert.ok(r.error);
+});
+
+test("sign with alg=none produces an unsigned token decodable by decode()", async () => {
+  const r = await sign({ alg: "none" }, { sub: "anon", iat: 1700000000 }, null);
+  assert.equal(r.error, undefined);
+  assert.match(r.token, /^[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.$/);
+  const d = decode(r.token);
+  assert.equal(d.error, undefined);
+  assert.deepEqual(d.header, { alg: "none" });
+  assert.equal(d.payload.sub, "anon");
+  assert.equal(d.signature, "");
 });

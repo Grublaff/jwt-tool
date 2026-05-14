@@ -43,13 +43,23 @@ export async function verify(token, key, opts = {}) {
 
 /**
  * Sign a JWT. The header object is used verbatim as the protected header
- * (caller controls alg, typ, kid, etc.). Payload used as-is.
+ * (caller controls alg, typ, kid). Payload used as-is.
  *
- * @param {{header: object, payload: object, key: any}} args
+ * For alg "none", assembles an unsigned JWS Unencoded Payload manually
+ * because jose.SignJWT refuses to sign with alg: none.
+ *
+ * @param {object} header
+ * @param {object} payload
+ * @param {CryptoKey | Uint8Array | object | null} key  Ignored when alg is "none"
  * @returns {Promise<{token:string} | {error:string}>}
  */
-export async function sign({ header, payload, key }) {
+export async function sign(header, payload, key) {
   try {
+    if (header && header.alg === "none") {
+      const h = base64url.encode(JSON.stringify(header));
+      const p = base64url.encode(JSON.stringify(payload));
+      return { token: `${h}.${p}.` };
+    }
     const token = await new SignJWT(payload).setProtectedHeader(header).sign(key);
     return { token };
   } catch (e) {
