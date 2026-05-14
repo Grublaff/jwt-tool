@@ -39,3 +39,32 @@ test("decode returns error when header/payload are not JSON", () => {
   const t = "bm90IGpzb24.bm90IGpzb24.sig";
   assert.match(decode(t).error, /Failed to decode/);
 });
+
+import { verify } from "../src/codec.js";
+import { fixture, HMAC_ALGS, ASYM_ALGS } from "./fixtures.js";
+
+for (const alg of [...HMAC_ALGS, ...ASYM_ALGS]) {
+  test(`verify accepts a valid ${alg} token`, async () => {
+    const { token, verifyKey } = await fixture(alg);
+    const r = await verify(token, verifyKey);
+    assert.equal(r.ok, true);
+    assert.equal(r.payload.sub, "test");
+  });
+
+  test(`verify rejects a tampered ${alg} token`, async () => {
+    const { token, verifyKey } = await fixture(alg);
+    const parts = token.split(".");
+    // Flip one bit in the payload by re-encoding a different object
+    const bad = parts[0] + "." + Buffer.from(JSON.stringify({ sub: "evil" })).toString("base64url") + "." + parts[2];
+    const r = await verify(bad, verifyKey);
+    assert.equal(r.ok, false);
+    assert.ok(r.error);
+  });
+}
+
+test("verify reports unsigned tokens (alg=none) as not ok", async () => {
+  // "alg":"none" — header.payload. (empty signature)
+  const t = "eyJhbGciOiJub25lIn0.eyJzdWIiOiJ4In0.";
+  const r = await verify(t, null);
+  assert.equal(r.ok, false);
+});

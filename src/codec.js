@@ -1,4 +1,4 @@
-import { base64url } from "jose";
+import { base64url, jwtVerify } from "jose";
 
 const dec = new TextDecoder();
 
@@ -20,5 +20,23 @@ export function decode(token) {
     return { header, payload, signature: rawSignature, raw: [rawHeader, rawPayload, rawSignature] };
   } catch (e) {
     return { error: "Failed to decode: " + e.message };
+  }
+}
+
+/**
+ * Verify a JWT signature with the supplied key.
+ * Never throws — returns { ok: false, error } on any failure including alg=none.
+ *
+ * @param {string} token
+ * @param {CryptoKey|Uint8Array|object} key  CryptoKey, raw HMAC bytes, or a JWK
+ * @param {{algorithms?: string[]}} [opts]
+ * @returns {Promise<{ok:true, alg:string, payload:object} | {ok:false, alg?:string, error:string}>}
+ */
+export async function verify(token, key, opts = {}) {
+  try {
+    const { payload, protectedHeader } = await jwtVerify(token, key, opts);
+    return { ok: true, alg: protectedHeader.alg, payload };
+  } catch (e) {
+    return { ok: false, error: e.message };
   }
 }
