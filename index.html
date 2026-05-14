@@ -2,9 +2,35 @@
 <html lang="en">
   <head>
     <meta charset="utf-8" />
-    <title>JWT Tool</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="referrer" content="no-referrer" />
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; connect-src 'none'; object-src 'none'; form-action 'none'; frame-ancestors 'none'; base-uri 'self'"
+    />
+    <title>JWT Tool — alburg.se</title>
+    <link rel="stylesheet" href="/src/styles.css" />
   </head>
   <body>
+    <header class="app">
+      <h1>JWT Tool</h1>
+      <span class="privacy-note">decode · verify · sign — everything happens in your browser</span>
+      <span class="spacer"></span>
+      <div class="mode-toggle" role="tablist" aria-label="Mode">
+        <button type="button" data-view="decoder" aria-pressed="true">Decoder</button>
+        <button type="button" data-view="encoder" aria-pressed="false">Encoder</button>
+      </div>
+    </header>
+
+    <main>
+      <section class="panel" id="left">
+        <!-- Filled by ui.js depending on current view -->
+      </section>
+      <section class="panel" id="right">
+        <!-- Filled by ui.js depending on current view -->
+      </section>
+    </main>
+
     <script type="module" src="/src/main.js"></script>
   </body>
 </html>
